@@ -1,43 +1,41 @@
 package com.tom.payment.routinemanager.api;
 
-import org.springframework.http.HttpStatus;
+import com.tom.payment.routinemanager.model.DailyRoutine;
+import com.tom.payment.routinemanager.model.DefaultRoutine;
+import com.tom.payment.routinemanager.model.User;
+import com.tom.payment.routinemanager.service.RoutineService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/routine-manager")
 public class RoutineManagerController {
 
-    @PostMapping("/payment-requests")
-    public ResponseEntity<RoutineManagerResponse> acceptPaymentRequest(@RequestBody PaymentRoutineManagerRequest request) {
-        RoutineManagerResponse response = new RoutineManagerResponse(
-                UUID.randomUUID().toString(),
-                "ACCEPTED",
-                "Payment request accepted",
-                Instant.now()
-        );
+    private final RoutineService routineService;
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    public RoutineManagerController(RoutineService routineService) {
+        this.routineService = routineService;
     }
 
-    public record PaymentRoutineManagerRequest(
-            String customerId,
-            BigDecimal amount,
-            String currency,
-            String description
-    ) {
+    @PostMapping("/default-routine/{userId}")
+    public ResponseEntity<DefaultRoutine> createDefaultRoutine(
+            @PathVariable UUID userId,
+            @RequestBody DefaultRoutine defaultRoutine) {
+        DefaultRoutine createdRoutine = routineService.createDefaultRoutine(userId, defaultRoutine);
+        return ResponseEntity.ok(createdRoutine);
     }
 
-    public record RoutineManagerResponse(
-            String requestId,
-            String status,
-            String message,
-            Instant acceptedAt
-    ) {
+    @GetMapping("/daily-routine/{userId}")
+    public ResponseEntity<DailyRoutine> getDailyRoutine(
+            @PathVariable UUID userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        DailyRoutine dailyRoutine = routineService.getOrCreateDailyRoutine(userId, targetDate);
+        return ResponseEntity.ok(dailyRoutine);
     }
-
 }
