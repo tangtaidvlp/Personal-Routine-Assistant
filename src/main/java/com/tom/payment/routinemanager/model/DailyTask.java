@@ -1,5 +1,6 @@
 package com.tom.payment.routinemanager.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ public class DailyTask {
     private int durationMinutes;
     private boolean completed;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "daily_routine_id")
     private DailyRoutine dailyRoutine;

@@ -1,5 +1,6 @@
 package com.tom.payment.routinemanager.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class DefaultRoutine {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "defaultRoutine", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoutineTaskTemplate> tasks = new ArrayList<>();
 }

@@ -1,5 +1,6 @@
 package com.tom.payment.routinemanager.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,6 +23,7 @@ public class RoutineTaskTemplate {
     private LocalTime startTime;
     private int durationMinutes;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "default_routine_id")
     private DefaultRoutine defaultRoutine;
