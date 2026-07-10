@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,11 +37,11 @@ public class RoutineServiceIntegrationTest {
 
     @Test
     public void testCreateDailyRoutineFromDefault() {
-        // 1. Setup User
+        // 1. Setup User (now automatically creates Default Routine)
         User user = new User("testuser", "test@example.com");
         user = userService.createUser(user);
 
-        // 2. Setup Default Routine
+        // 2. Update Default Routine (instead of creating a new one)
         DefaultRoutine defaultRoutine = new DefaultRoutine();
         defaultRoutine.setName("Workday Routine");
 
@@ -66,5 +67,28 @@ public class RoutineServiceIntegrationTest {
         assertEquals("Morning Coffee", dailyTask.getName());
         assertEquals(LocalTime.of(8, 0), dailyTask.getStartTime());
         assertFalse(dailyTask.isCompleted());
+    }
+
+    @Test
+    public void testUpdateDefaultRoutine() {
+        User user = new User("updateuser", "update@example.com");
+        user = userService.createUser(user);
+
+        DefaultRoutine existing = defaultRoutineRepository.findByUser(user).orElseThrow();
+        UUID routineId = existing.getId();
+
+        DefaultRoutine update = new DefaultRoutine();
+        update.setName("Updated Name");
+        RoutineTaskTemplate task = new RoutineTaskTemplate();
+        task.setName("New Task");
+        update.setTasks(Collections.singletonList(task));
+
+        routineService.updateDefaultRoutine(routineId, update);
+
+        DefaultRoutine updated = defaultRoutineRepository.findById(routineId).orElseThrow();
+        assertEquals("Updated Name", updated.getName());
+        assertEquals(1, updated.getTasks().size());
+        assertEquals("New Task", updated.getTasks().get(0).getName());
+        assertEquals(updated, updated.getTasks().get(0).getDefaultRoutine());
     }
 }

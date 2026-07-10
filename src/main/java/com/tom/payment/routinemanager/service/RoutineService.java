@@ -30,12 +30,46 @@ public class RoutineService {
     public DefaultRoutine createDefaultRoutine(UUID userId, DefaultRoutine defaultRoutine) {
         User user = userService.getUserById(userId);
         
-        defaultRoutine.setUser(user);
+        // If a default routine already exists for this user, we might want to update it instead or throw error.
+        // For simplicity, let's just use findByUser.
+        return defaultRoutineRepository.findByUser(user)
+                .map(existing -> {
+                    existing.setName(defaultRoutine.getName());
+                    existing.getTasks().clear();
+                    if (defaultRoutine.getTasks() != null) {
+                        defaultRoutine.getTasks().forEach(task -> {
+                            task.setDefaultRoutine(existing);
+                            existing.getTasks().add(task);
+                        });
+                    }
+                    return defaultRoutineRepository.save(existing);
+                })
+                .orElseGet(() -> {
+                    defaultRoutine.setUser(user);
+                    if (defaultRoutine.getTasks() != null) {
+                        defaultRoutine.getTasks().forEach(task -> task.setDefaultRoutine(defaultRoutine));
+                    }
+                    return defaultRoutineRepository.save(defaultRoutine);
+                });
+    }
+
+    @Transactional
+    public DefaultRoutine updateDefaultRoutine(UUID id, DefaultRoutine defaultRoutine) {
+        DefaultRoutine existing = defaultRoutineRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Default routine not found"));
+        
+        existing.setName(defaultRoutine.getName());
+        
+        // Simple update: clear and add new tasks
+        existing.getTasks().clear();
         if (defaultRoutine.getTasks() != null) {
-            defaultRoutine.getTasks().forEach(task -> task.setDefaultRoutine(defaultRoutine));
+            defaultRoutine.getTasks().forEach(task -> {
+                task.setDefaultRoutine(existing);
+                existing.getTasks().add(task);
+            });
         }
         
-        return defaultRoutineRepository.save(defaultRoutine);
+        return defaultRoutineRepository.save(existing);
     }
 
     @Transactional

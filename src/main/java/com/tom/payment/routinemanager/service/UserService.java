@@ -1,7 +1,9 @@
 package com.tom.payment.routinemanager.service;
 
+import com.tom.payment.routinemanager.model.DefaultRoutine;
 import com.tom.payment.routinemanager.model.User;
 import com.tom.payment.routinemanager.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,14 +13,22 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RoutineService routineService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, @Lazy RoutineService routineService) {
         this.userRepository = userRepository;
+        this.routineService = routineService;
     }
 
     @Transactional
     public User createUser(User user) {
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        DefaultRoutine defaultRoutine = new DefaultRoutine();
+        defaultRoutine.setName("Default Routine");
+        routineService.createDefaultRoutine(savedUser.getId(), defaultRoutine);
+        
+        return savedUser;
     }
 
     public User getUserById(UUID id) {

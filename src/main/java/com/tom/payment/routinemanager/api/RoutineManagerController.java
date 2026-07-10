@@ -29,6 +29,14 @@ public class RoutineManagerController {
         return ResponseEntity.ok(createdRoutine);
     }
 
+    @PutMapping("/default-routine/{id}")
+    public ResponseEntity<DefaultRoutine> updateDefaultRoutine(
+            @PathVariable UUID id,
+            @RequestBody DefaultRoutine defaultRoutine) {
+        DefaultRoutine updatedRoutine = routineService.updateDefaultRoutine(id, defaultRoutine);
+        return ResponseEntity.ok(updatedRoutine);
+    }
+
     @GetMapping("/daily-routine/{userId}")
     public ResponseEntity<DailyRoutine> getDailyRoutine(
             @PathVariable UUID userId,
