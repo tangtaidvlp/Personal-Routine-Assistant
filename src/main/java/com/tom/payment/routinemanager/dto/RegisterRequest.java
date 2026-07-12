@@ -1,0 +1,9 @@
+package com.tom.payment.routinemanager.dto;
+
+import lombok.Data;
+
+@Data
+public class RegisterRequest {
+    private String email;
+    private String password;
+}

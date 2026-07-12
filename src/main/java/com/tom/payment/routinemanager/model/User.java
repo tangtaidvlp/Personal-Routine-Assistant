@@ -20,6 +20,9 @@ public class User {
     private String username;
     private String email;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     public User(String username, String email) {
         this.username = username;
         this.email = email;

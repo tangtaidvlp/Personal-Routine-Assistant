@@ -1,0 +1,181 @@
+2. Secure Token Storage Strategy (Mitigating Risks)
+
+Storing JWTs in the browser's localStorage makes them highly vulnerable to Cross-Site Scripting (XSS) attacks, where a malicious third-party script can steal the token. To protect our users, we will implement a Dual-Token Strategy:
+
+Access Token (Short-lived - 15 Minutes):
+
+Stored in React application memory (React State).
+
+Sent in the Authorization: Bearer <Access_Token> HTTP header for API calls.
+
+Because it lives in memory, it is completely immune to persistent storage theft, and its short lifespan minimizes damage if intercepted.
+
+Refresh Token (Long-lived - 7 Days):
+
+Stored in a secure, HttpOnly, SameSite=Strict cookie set by the Spring Boot server.
+
+HttpOnly means JavaScript in the React frontend cannot access or read the cookie, neutralizing XSS vulnerabilities.
+
+Used solely to request a fresh Access Token when the 15-minute token expires.
+
+3. High-Level Authentication Flow
+
+┌──────────┐                     ┌─────────────┐                     ┌──────────┐
+│React Client│                   │ Spring Boot │                     │PostgresDB│
+└────┬─────┘                     └──────┬──────┘                     └────┬─────┘
+     │        1. POST /login            │                                 │
+     ├─────────────────────────────────>│                                 │
+     │        (Email & Password)        │   2. Fetch User Record          │
+     │                                  ├────────────────────────────────>│
+     │                                  │   3. Validate Hash              │
+     │                                  │<────────────────────────────────┤
+     │  4. Set Refresh Cookie           │                                 │
+     │<─────────────────────────────────┤                                 │
+     │  5. Return JSON Access Token     │                                 │
+     │<─────────────────────────────────┤                                 │
+     │                                  │                                 │
+─── ACCESS TOKEN EXPIRES (15 Mins) ────────────────────────────────────────────────
+     │                                  │                                 │
+     │  6. POST /auth/refresh           │                                 │
+     ├─────────────────────────────────>│                                 │
+     │  (Automatically sends cookie)    │   7. Validate Refresh Token     │
+     │                                  ├────────────────────────────────>│
+     │                                  │<────────────────────────────────┤
+     │  8. Return New Access Token      │                                 │
+     │<─────────────────────────────────┤                                 │
+
+
+
+4. REST API Endpoint Specifications
+
+The Spring Boot backend will expose the following endpoint contracts under /api/v1/auth.
+
+A. User Registration (Sign-Up)
+
+Endpoint: POST /api/v1/auth/register
+
+Request Payload (application/json):
+
+{
+  "email": "user@example.com",
+  "password": "StrongSecurePassword123"
+}
+
+
+
+Response Status: 201 Created
+
+Response Payload:
+
+{
+  "userId": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "email": "user@example.com",
+  "message": "User registered successfully."
+}
+
+
+
+B. User Authentication (Login)
+
+Endpoint: POST /api/v1/auth/login
+
+Request Payload (application/json):
+
+{
+  "email": "user@example.com",
+  "password": "StrongSecurePassword123"
+}
+
+
+
+Response Headers:
+
+Set-Cookie: refresh_token=eyJhbGciOi...; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=604800
+
+Response Status: 200 OK
+
+Response Payload:
+
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 900,
+  "user": {
+    "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+    "email": "user@example.com"
+  }
+}
+
+
+
+C. Token Refresh (Silent Re-auth)
+
+Endpoint: POST /api/v1/auth/refresh
+
+Request Payload: None (Reads refresh_token from incoming HTTP Cookies).
+
+Response Status: 200 OK (or 401 Unauthorized if refresh token is expired/invalid).
+
+Response Payload:
+
+{
+  "accessToken": "new_access_token_string_here...",
+  "expiresIn": 900
+}
+
+
+
+D. User Logout
+
+Endpoint: POST /api/v1/auth/logout
+
+Request Payload: None.
+
+Response Headers:
+
+Set-Cookie: refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=0 (Clears the cookie).
+
+Response Status: 200 OK
+
+5. Third-Party Single Sign-On (SSO) Support
+
+To satisfy REQ-1.1 (Google/Apple SSO integration), we will implement an Authorization Code Flow with Token Exchange:
+
+Frontend Trigger: The React client redirects the user to Google/Apple authorization.
+
+Callback Handling: After authorization, Google redirects the user back to our React site with an authorization_code.
+
+Token Exchange Endpoint (POST /api/v1/auth/oauth2/callback):
+
+React forwards the authorization_code to our Spring Boot backend.
+
+Spring Boot contacts Google's token endpoint to verify the code and extract user information (name, email).
+
+If the user is new, Spring Boot registers them in the database.
+
+Spring Boot generates our local system's JWT Access Token & Refresh Token and returns them exactly like a normal login, keeping the app session fully uniform.
+
+6. Database Entity Schemas for Security
+
+These database column specifications will be handled in PostgreSQL. We will create two main tables: users and refresh_tokens.
+
+-- 1. Users Table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- BCrypt hashed passwords
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_users_email ON users(email);
+
+-- 2. Revocation & Refresh Token Audit Table (To support remote logouts)
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_val VARCHAR(512) UNIQUE NOT NULL,
+    expiry_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_revoked BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+CREATE INDEX idx_refresh_token_val ON refresh_tokens(token_val);
