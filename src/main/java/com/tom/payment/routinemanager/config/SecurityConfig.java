@@ -16,7 +16,6 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/**").permitAll() // Allow all API endpoints for now
                 .anyRequest().authenticated()
             );
         
