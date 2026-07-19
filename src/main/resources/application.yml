@@ -12,3 +12,9 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
+
+  ai:
+    vertex:
+      ai:
+        gemini:
+          api-key: ${GEMINI_API_KEY:your_google_ai_studio_api_key_here}

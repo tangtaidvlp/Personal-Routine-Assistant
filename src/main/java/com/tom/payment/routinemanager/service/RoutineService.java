@@ -3,6 +3,8 @@ package com.tom.payment.routinemanager.service;
 import com.tom.payment.routinemanager.model.*;
 import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
+import com.tom.payment.routinemanager.repository.DailyTaskRepository;
+import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +19,19 @@ public class RoutineService {
     private final UserService userService;
     private final DefaultRoutineRepository defaultRoutineRepository;
     private final DailyRoutineRepository dailyRoutineRepository;
+    private final RoutineTaskTemplateRepository routineTaskTemplateRepository;
+    private final DailyTaskRepository dailyTaskRepository;
 
     public RoutineService(UserService userService,
                           DefaultRoutineRepository defaultRoutineRepository,
-                          DailyRoutineRepository dailyRoutineRepository) {
+                          DailyRoutineRepository dailyRoutineRepository,
+                          RoutineTaskTemplateRepository routineTaskTemplateRepository,
+                          DailyTaskRepository dailyTaskRepository) {
         this.userService = userService;
         this.defaultRoutineRepository = defaultRoutineRepository;
         this.dailyRoutineRepository = dailyRoutineRepository;
+        this.routineTaskTemplateRepository = routineTaskTemplateRepository;
+        this.dailyTaskRepository = dailyTaskRepository;
     }
 
     @Transactional
@@ -103,5 +111,70 @@ public class RoutineService {
 
         dailyRoutine.setTasks(dailyTasks);
         return dailyRoutineRepository.save(dailyRoutine);
+    }
+
+    @Transactional
+    public List<RoutineTaskTemplate> addDefaultTasks(UUID defaultRoutineId, List<RoutineTaskTemplate> tasks) {
+        DefaultRoutine routine = defaultRoutineRepository.findById(defaultRoutineId)
+                .orElseThrow(() -> new RuntimeException("Default routine not found"));
+        tasks.forEach(task -> task.setDefaultRoutine(routine));
+        return routineTaskTemplateRepository.saveAll(tasks);
+    }
+
+    @Transactional
+    public List<RoutineTaskTemplate> updateDefaultTasks(List<RoutineTaskTemplate> tasksDetails) {
+        return tasksDetails.stream().map(details -> {
+            RoutineTaskTemplate existing = routineTaskTemplateRepository.findById(details.getId())
+                    .orElseThrow(() -> new RuntimeException("Task template not found: " + details.getId()));
+            existing.setName(details.getName());
+            existing.setDescription(details.getDescription());
+            existing.setStartTime(details.getStartTime());
+            existing.setDurationMinutes(details.getDurationMinutes());
+            return routineTaskTemplateRepository.save(existing);
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteDefaultTasks(List<UUID> taskIds) {
+        List<RoutineTaskTemplate> tasks = routineTaskTemplateRepository.findAllById(taskIds);
+        tasks.forEach(task -> {
+            if (task.getDefaultRoutine() != null) {
+                task.getDefaultRoutine().getTasks().remove(task);
+            }
+        });
+        routineTaskTemplateRepository.deleteAll(tasks);
+    }
+
+    @Transactional
+    public List<DailyTask> addDailyTasks(UUID dailyRoutineId, List<DailyTask> tasks) {
+        DailyRoutine routine = dailyRoutineRepository.findById(dailyRoutineId)
+                .orElseThrow(() -> new RuntimeException("Daily routine not found"));
+        tasks.forEach(task -> task.setDailyRoutine(routine));
+        return dailyTaskRepository.saveAll(tasks);
+    }
+
+    @Transactional
+    public List<DailyTask> updateDailyTasks(List<DailyTask> tasksDetails) {
+        return tasksDetails.stream().map(details -> {
+            DailyTask existing = dailyTaskRepository.findById(details.getId())
+                    .orElseThrow(() -> new RuntimeException("Daily task not found: " + details.getId()));
+            existing.setName(details.getName());
+            existing.setDescription(details.getDescription());
+            existing.setStartTime(details.getStartTime());
+            existing.setDurationMinutes(details.getDurationMinutes());
+            existing.setCompleted(details.isCompleted());
+            return dailyTaskRepository.save(existing);
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteDailyTasks(List<UUID> taskIds) {
+        List<DailyTask> tasks = dailyTaskRepository.findAllById(taskIds);
+        tasks.forEach(task -> {
+            if (task.getDailyRoutine() != null) {
+                task.getDailyRoutine().getTasks().remove(task);
+            }
+        });
+        dailyTaskRepository.deleteAll(tasks);
     }
 }
