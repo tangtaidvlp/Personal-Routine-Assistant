@@ -3,6 +3,9 @@ package com.tom.payment.routinemanager.service;
 import com.tom.payment.routinemanager.model.*;
 import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
@@ -20,22 +23,14 @@ import java.util.stream.Collectors;
  * then delegates to RoutineService for the actual persistence.
  */
 @Service
+@RequiredArgsConstructor
 public class AiRoutineTools {
 
-    private final RoutineService routineService;
+    private final DefaultRoutineService routineService;
+    private final DailyRoutineService dailyRoutineService;
     private final UserService userService;
     private final DefaultRoutineRepository defaultRoutineRepository;
     private final DailyRoutineRepository dailyRoutineRepository;
-
-    public AiRoutineTools(RoutineService routineService,
-                          UserService userService,
-                          DefaultRoutineRepository defaultRoutineRepository,
-                          DailyRoutineRepository dailyRoutineRepository) {
-        this.routineService = routineService;
-        this.userService = userService;
-        this.defaultRoutineRepository = defaultRoutineRepository;
-        this.dailyRoutineRepository = dailyRoutineRepository;
-    }
 
     // ========== Default Routine Tools ==========
 
@@ -91,7 +86,8 @@ public class AiRoutineTools {
                 details.setName(u.newName() != null ? u.newName() : existing.getName());
                 details.setDescription(u.description() != null ? u.description() : existing.getDescription());
                 details.setStartTime(u.startTime() != null ? LocalTime.parse(u.startTime()) : existing.getStartTime());
-                details.setDurationMinutes(u.durationMinutes() != null ? u.durationMinutes() : existing.getDurationMinutes());
+                Integer requestedDuration = u.durationMinutes();
+                details.setDurationMinutes(requestedDuration != null ? requestedDuration : existing.getDurationMinutes());
                 toUpdate.add(details);
             }
 
@@ -151,7 +147,7 @@ public class AiRoutineTools {
                 return t;
             }).collect(Collectors.toList());
 
-            routineService.addDailyTasks(routine.getId(), entities);
+            dailyRoutineService.addDailyTasks(routine.getId(), entities);
             return "Successfully added " + entities.size() + " task(s) to daily routine for " + date + ".";
         } catch (Exception e) {
             return "Failed to add daily tasks: " + e.getMessage();
@@ -184,12 +180,14 @@ public class AiRoutineTools {
                 details.setName(u.newName() != null ? u.newName() : existing.getName());
                 details.setDescription(u.description() != null ? u.description() : existing.getDescription());
                 details.setStartTime(u.startTime() != null ? LocalTime.parse(u.startTime()) : existing.getStartTime());
-                details.setDurationMinutes(u.durationMinutes() != null ? u.durationMinutes() : existing.getDurationMinutes());
-                details.setCompleted(u.completed() != null ? u.completed() : existing.isCompleted());
+                Integer requestedDuration = u.durationMinutes();
+                details.setDurationMinutes(requestedDuration != null ? requestedDuration : existing.getDurationMinutes());
+                Boolean requestedCompleted = u.completed();
+                details.setCompleted(requestedCompleted != null ? requestedCompleted : existing.isCompleted());
                 toUpdate.add(details);
             }
 
-            routineService.updateDailyTasks(toUpdate);
+            dailyRoutineService.updateDailyTasks(toUpdate);
             return "Successfully updated " + toUpdate.size() + " task(s) in daily routine for " + date + ".";
         } catch (Exception e) {
             return "Failed to update daily tasks: " + e.getMessage();
@@ -214,7 +212,7 @@ public class AiRoutineTools {
 
             if (ids.isEmpty()) return "No matching tasks found to delete.";
 
-            routineService.deleteDailyTasks(ids);
+            dailyRoutineService.deleteDailyTasks(ids);
             return "Successfully deleted " + ids.size() + " task(s) from daily routine for " + date + ".";
         } catch (Exception e) {
             return "Failed to delete daily tasks: " + e.getMessage();

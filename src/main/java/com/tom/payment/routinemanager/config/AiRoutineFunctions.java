@@ -3,7 +3,8 @@ package com.tom.payment.routinemanager.config;
 import com.tom.payment.routinemanager.model.*;
 import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
-import com.tom.payment.routinemanager.service.RoutineService;
+import com.tom.payment.routinemanager.service.DailyRoutineService;
+import com.tom.payment.routinemanager.service.DefaultRoutineService;
 import com.tom.payment.routinemanager.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +46,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Add a list of tasks to the user's default routine template.")
     public Function<AddDefaultTasksRequest, ToolResponse> addDefaultTasksFunction(
-            RoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
+            DefaultRoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -72,7 +73,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Update details of multiple tasks in the user's default routine template.")
     public Function<UpdateDefaultTasksRequest, ToolResponse> updateDefaultTasksFunction(
-            RoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
+            DefaultRoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -92,7 +93,9 @@ public class AiRoutineFunctions {
                     updatedDetails.setName(update.newName() != null ? update.newName() : existing.getName());
                     updatedDetails.setDescription(update.description() != null ? update.description() : existing.getDescription());
                     updatedDetails.setStartTime(update.startTime() != null ? LocalTime.parse(update.startTime()) : existing.getStartTime());
-                    updatedDetails.setDurationMinutes(update.durationMinutes() != null ? update.durationMinutes() : existing.getDurationMinutes());
+                    Integer requestedDuration = update.durationMinutes();
+                    int durationMinutes = requestedDuration != null ? requestedDuration : existing.getDurationMinutes();
+                    updatedDetails.setDurationMinutes(durationMinutes);
                     
                     tasksToUpdate.add(updatedDetails);
                 }
@@ -108,7 +111,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Delete multiple tasks from the user's default routine template by their names.")
     public Function<DeleteDefaultTasksRequest, ToolResponse> deleteDefaultTasksFunction(
-            RoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
+            DefaultRoutineService routineService, UserService userService, DefaultRoutineRepository defaultRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -137,7 +140,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Add multiple tasks to the user's daily routine for a specific date (yyyy-MM-dd).")
     public Function<AddDailyTasksRequest, ToolResponse> addDailyTasksFunction(
-            RoutineService routineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
+            DailyRoutineService dailyRoutineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -155,7 +158,7 @@ public class AiRoutineFunctions {
                     return task;
                 }).collect(Collectors.toList());
 
-                routineService.addDailyTasks(routine.getId(), tasks);
+                dailyRoutineService.addDailyTasks(routine.getId(), tasks);
                 return new ToolResponse(true, "Successfully added " + tasks.size() + " task(s) to daily routine for " + request.date() + ".");
             } catch (Exception e) {
                 return new ToolResponse(false, "Failed to add tasks to daily routine: " + e.getMessage());
@@ -166,7 +169,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Update multiple tasks in the user's daily routine for a specific date (yyyy-MM-dd), such as marking completed/incomplete or shifting times.")
     public Function<UpdateDailyTasksRequest, ToolResponse> updateDailyTasksFunction(
-            RoutineService routineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
+            DailyRoutineService dailyRoutineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -187,13 +190,16 @@ public class AiRoutineFunctions {
                     updatedDetails.setName(update.newName() != null ? update.newName() : existing.getName());
                     updatedDetails.setDescription(update.description() != null ? update.description() : existing.getDescription());
                     updatedDetails.setStartTime(update.startTime() != null ? LocalTime.parse(update.startTime()) : existing.getStartTime());
-                    updatedDetails.setDurationMinutes(update.durationMinutes() != null ? update.durationMinutes() : existing.getDurationMinutes());
-                    updatedDetails.setCompleted(update.completed() != null ? update.completed() : existing.isCompleted());
+                    Integer requestedDuration = update.durationMinutes();
+                    int durationMinutes = requestedDuration != null ? requestedDuration : existing.getDurationMinutes();
+                    updatedDetails.setDurationMinutes(durationMinutes);
+                    Boolean requestedCompleted = update.completed();
+                    updatedDetails.setCompleted(requestedCompleted != null ? requestedCompleted : existing.isCompleted());
                     
                     tasksToUpdate.add(updatedDetails);
                 }
 
-                routineService.updateDailyTasks(tasksToUpdate);
+                dailyRoutineService.updateDailyTasks(tasksToUpdate);
                 return new ToolResponse(true, "Successfully updated " + tasksToUpdate.size() + " task(s) in daily routine for " + request.date() + ".");
             } catch (Exception e) {
                 return new ToolResponse(false, "Failed to update daily routine tasks: " + e.getMessage());
@@ -204,7 +210,7 @@ public class AiRoutineFunctions {
     @Bean
     @Description("Delete multiple tasks from the user's daily routine for a specific date (yyyy-MM-dd) by their names.")
     public Function<DeleteDailyTasksRequest, ToolResponse> deleteDailyTasksFunction(
-            RoutineService routineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
+            DailyRoutineService dailyRoutineService, UserService userService, DailyRoutineRepository dailyRoutineRepository) {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
@@ -221,7 +227,7 @@ public class AiRoutineFunctions {
                     return new ToolResponse(false, "No matching tasks found to delete.");
                 }
 
-                routineService.deleteDailyTasks(idsToDelete);
+                dailyRoutineService.deleteDailyTasks(idsToDelete);
                 return new ToolResponse(true, "Successfully deleted " + idsToDelete.size() + " task(s) from daily routine for " + request.date() + ".");
             } catch (Exception e) {
                 return new ToolResponse(false, "Failed to delete daily routine tasks: " + e.getMessage());

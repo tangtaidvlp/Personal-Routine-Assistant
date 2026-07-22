@@ -1,8 +1,11 @@
 package com.tom.payment.routinemanager.service;
 
+import java.util.List;
+
 import com.tom.payment.routinemanager.model.DefaultRoutine;
 import com.tom.payment.routinemanager.model.User;
 import com.tom.payment.routinemanager.repository.UserRepository;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +16,9 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoutineService routineService;
+    private final DefaultRoutineService routineService;
 
-    public UserService(UserRepository userRepository, @Lazy RoutineService routineService) {
+    public UserService(UserRepository userRepository, @Lazy DefaultRoutineService routineService) {
         this.userRepository = userRepository;
         this.routineService = routineService;
     }
@@ -34,5 +37,10 @@ public class UserService {
     public User getUserById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // Fetch all users
+    public List<User> getAllUsers() {
+        return (List<User>) userRepository.findAll();
     }
 }

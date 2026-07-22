@@ -1,5 +1,6 @@
 package com.tom.payment.routinemanager.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,11 +22,20 @@ public class DefaultRoutine {
 
     private String name;
 
-    @OneToOne
+    private RoutineTypeEnum routineType;
+
+    @JsonBackReference
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "defaultRoutine", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RoutineTaskTemplate> tasks = new ArrayList<>();
+
+    static enum RoutineTypeEnum {
+        WEEKDAY,
+        WEEKEND
+    }
+    
 }

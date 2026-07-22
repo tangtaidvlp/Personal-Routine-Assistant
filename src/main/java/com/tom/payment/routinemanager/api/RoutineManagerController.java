@@ -23,17 +23,22 @@ import com.tom.payment.routinemanager.model.DailyTask;
 import com.tom.payment.routinemanager.model.DefaultRoutine;
 import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
 import com.tom.payment.routinemanager.service.AiChatService;
-import com.tom.payment.routinemanager.service.RoutineService;
+import com.tom.payment.routinemanager.service.DailyRoutineService;
+import com.tom.payment.routinemanager.service.DefaultRoutineService;
 
 @RestController
 @RequestMapping("/api/routine-manager")
 public class RoutineManagerController {
 
-    private final RoutineService routineService;
+    private final DefaultRoutineService routineService;
+    private final DailyRoutineService dailyRoutineService;
     private final AiChatService aiChatService;
 
-    public RoutineManagerController(RoutineService routineService, AiChatService aiChatService) {
+    public RoutineManagerController(DefaultRoutineService routineService,
+                                    DailyRoutineService dailyRoutineService,
+                                    AiChatService aiChatService) {
         this.routineService = routineService;
+        this.dailyRoutineService = dailyRoutineService;
         this.aiChatService = aiChatService;
     }
 
@@ -73,20 +78,20 @@ public class RoutineManagerController {
     public ResponseEntity<List<DailyTask>> addDailyTasks(
             @PathVariable UUID routineId,
             @RequestBody List<DailyTask> tasks) {
-        List<DailyTask> createdTasks = routineService.addDailyTasks(routineId, tasks);
+        List<DailyTask> createdTasks = dailyRoutineService.addDailyTasks(routineId, tasks);
         return ResponseEntity.ok(createdTasks);
     }
 
     @PutMapping("/daily-routine/tasks")
     public ResponseEntity<List<DailyTask>> updateDailyTasks(
             @RequestBody List<DailyTask> tasksDetails) {
-        List<DailyTask> updatedTasks = routineService.updateDailyTasks(tasksDetails);
+        List<DailyTask> updatedTasks = dailyRoutineService.updateDailyTasks(tasksDetails);
         return ResponseEntity.ok(updatedTasks);
     }
 
     @DeleteMapping("/daily-routine/tasks")
     public ResponseEntity<Void> deleteDailyTasks(@RequestParam List<UUID> taskIds) {
-        routineService.deleteDailyTasks(taskIds);
+        dailyRoutineService.deleteDailyTasks(taskIds);
         return ResponseEntity.noContent().build();
     }
 
@@ -112,7 +117,7 @@ public class RoutineManagerController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime date) {
         
         ZonedDateTime targetDate = (date != null) ? date : ZonedDateTime.now();
-        DailyRoutine dailyRoutine = routineService.getOrCreateDailyRoutine(userId, targetDate);
+        DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(userId, targetDate);
         return ResponseEntity.ok(dailyRoutine);
     }
 }

@@ -26,7 +26,7 @@ import com.tom.payment.routinemanager.repository.DailyTaskRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
 import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
 import com.tom.payment.routinemanager.repository.UserRepository;
-import com.tom.payment.routinemanager.service.RoutineService;
+import com.tom.payment.routinemanager.service.DefaultRoutineService;
 import com.tom.payment.routinemanager.service.UserService;
 
 @SpringBootTest
@@ -34,7 +34,7 @@ import com.tom.payment.routinemanager.service.UserService;
 public class RoutineServiceIntegrationTest {
 
     @Autowired
-    private RoutineService routineService;
+    private DefaultRoutineService routineService;
 
     @Autowired
     private UserService userService;

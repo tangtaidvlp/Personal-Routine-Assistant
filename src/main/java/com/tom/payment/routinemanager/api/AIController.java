@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tom.payment.routinemanager.dto.ChatRequest;
 import com.tom.payment.routinemanager.dto.ChatResponse;
 import com.tom.payment.routinemanager.service.AiChatService;
-import com.tom.payment.routinemanager.service.RoutineService;
+import com.tom.payment.routinemanager.service.DefaultRoutineService;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -22,10 +22,10 @@ public class AIController {
 
     private static final Logger logger = LoggerFactory.getLogger(AIController.class);
 
-    private final RoutineService routineService;
+    private final DefaultRoutineService routineService;
     private final AiChatService aiChatService;
 
-    public AIController(RoutineService routineService, AiChatService aiChatService) {
+    public AIController(DefaultRoutineService routineService, AiChatService aiChatService) {
         this.routineService = routineService;
         this.aiChatService = aiChatService;
     }
