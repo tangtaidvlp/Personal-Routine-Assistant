@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
 
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,7 +141,7 @@ public class AiRoutineFunctions {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
-                LocalDate date = LocalDate.parse(request.date());
+                ZonedDateTime date = ZonedDateTime.parse(request.date());
                 DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, date)
                         .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + request.date()));
 
@@ -170,7 +170,7 @@ public class AiRoutineFunctions {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
-                LocalDate date = LocalDate.parse(request.date());
+                ZonedDateTime date = ZonedDateTime.parse(request.date());
                 DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, date)
                         .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + request.date()));
 
@@ -208,7 +208,7 @@ public class AiRoutineFunctions {
         return request -> {
             try {
                 User user = userService.getUserById(request.userId());
-                LocalDate date = LocalDate.parse(request.date());
+                ZonedDateTime date = ZonedDateTime.parse(request.date());
                 DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, date)
                         .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + request.date()));
 

@@ -1,22 +1,29 @@
 package com.tom.payment.routinemanager.api;
 
-import com.tom.payment.routinemanager.model.DailyTask;
-import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
-import com.tom.payment.routinemanager.model.DailyRoutine;
-import com.tom.payment.routinemanager.model.DefaultRoutine;
-import com.tom.payment.routinemanager.model.User;
-import com.tom.payment.routinemanager.service.RoutineService;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.tom.payment.routinemanager.dto.ChatRequest;
 import com.tom.payment.routinemanager.dto.ChatResponse;
+import com.tom.payment.routinemanager.model.DailyRoutine;
+import com.tom.payment.routinemanager.model.DailyTask;
+import com.tom.payment.routinemanager.model.DefaultRoutine;
+import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
 import com.tom.payment.routinemanager.service.AiChatService;
+import com.tom.payment.routinemanager.service.RoutineService;
 
 @RestController
 @RequestMapping("/api/routine-manager")
@@ -102,9 +109,9 @@ public class RoutineManagerController {
     @GetMapping("/daily-routine/{userId}")
     public ResponseEntity<DailyRoutine> getDailyRoutine(
             @PathVariable UUID userId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) ZonedDateTime date) {
         
-        LocalDate targetDate = (date != null) ? date : LocalDate.now();
+        ZonedDateTime targetDate = (date != null) ? date : ZonedDateTime.now();
         DailyRoutine dailyRoutine = routineService.getOrCreateDailyRoutine(userId, targetDate);
         return ResponseEntity.ok(dailyRoutine);
     }

@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.service;
 
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -67,6 +67,7 @@ public class RoutineService {
                 });
     }
 
+    // Fully overwrite the existing default routine with the new one, including tasks
     @Transactional
     public DefaultRoutine updateDefaultRoutine(UUID id, DefaultRoutine defaultRoutine) {
         DefaultRoutine existing = defaultRoutineRepository.findById(id)
@@ -87,14 +88,14 @@ public class RoutineService {
     }
 
     @Transactional
-    public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalDate date) {
+    public DailyRoutine getOrCreateDailyRoutine(UUID userId, ZonedDateTime date) {
         User user = userService.getUserById(userId);
 
         return dailyRoutineRepository.findByUserAndDate(user, date)
                 .orElseGet(() -> createDailyRoutineFromDefault(user, date));
     }
 
-    private DailyRoutine createDailyRoutineFromDefault(User user, LocalDate date) {
+    private DailyRoutine createDailyRoutineFromDefault(User user, ZonedDateTime date) {
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
 
