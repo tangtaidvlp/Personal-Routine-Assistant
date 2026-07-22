@@ -1,14 +1,5 @@
 package com.tom.payment.routinemanager;
 
-import com.tom.payment.routinemanager.model.*;
-import com.tom.payment.routinemanager.repository.*;
-import com.tom.payment.routinemanager.service.RoutineService;
-import com.tom.payment.routinemanager.service.UserService;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -16,7 +7,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.tom.payment.routinemanager.model.DailyRoutine;
+import com.tom.payment.routinemanager.model.DailyTask;
+import com.tom.payment.routinemanager.model.DefaultRoutine;
+import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
+import com.tom.payment.routinemanager.model.User;
+import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
+import com.tom.payment.routinemanager.repository.DailyTaskRepository;
+import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
+import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
+import com.tom.payment.routinemanager.repository.UserRepository;
+import com.tom.payment.routinemanager.service.RoutineService;
+import com.tom.payment.routinemanager.service.UserService;
 
 @SpringBootTest
 @Transactional
@@ -140,6 +151,39 @@ public class RoutineServiceIntegrationTest {
         routineService.deleteDefaultTasks(Arrays.asList(t1.getId(), t2.getId()));
         DefaultRoutine fetchedRoutine3 = defaultRoutineRepository.findById(routine.getId()).orElseThrow();
         assertEquals(0, fetchedRoutine3.getTasks().size());
+    }
+
+    @Test
+    public void testAddingOverlappingDefaultTaskShiftsConflictingTasks() {
+        User user = new User("overlapuser", "overlap@example.com");
+        user = userService.createUser(user);
+
+        DefaultRoutine defaultRoutine = new DefaultRoutine();
+        defaultRoutine.setName("Overlap Routine");
+
+        RoutineTaskTemplate existingTask = new RoutineTaskTemplate();
+        existingTask.setName("Existing Task");
+        existingTask.setStartTime(LocalTime.of(9, 0));
+        existingTask.setDurationMinutes(60);
+
+        defaultRoutine.setTasks(Collections.singletonList(existingTask));
+        routineService.createDefaultRoutine(user.getId(), defaultRoutine);
+
+        RoutineTaskTemplate newTask = new RoutineTaskTemplate();
+        newTask.setName("Inserted Task");
+        newTask.setStartTime(LocalTime.of(9, 30));
+        newTask.setDurationMinutes(30);
+
+        routineService.addDefaultTasks(defaultRoutineRepository.findByUser(user).orElseThrow().getId(), Collections.singletonList(newTask));
+
+        DefaultRoutine fetchedRoutine = defaultRoutineRepository.findByUser(user).orElseThrow();
+        RoutineTaskTemplate shiftedTask = fetchedRoutine.getTasks().stream()
+                .filter(task -> "Existing Task".equals(task.getName()))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(LocalTime.of(10, 0), shiftedTask.getStartTime());
+        assertEquals(60, shiftedTask.getDurationMinutes());
     }
 
     @Test

@@ -1,17 +1,23 @@
 package com.tom.payment.routinemanager.service;
 
-import com.tom.payment.routinemanager.model.*;
-import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
-import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
-import com.tom.payment.routinemanager.repository.DailyTaskRepository;
-import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.tom.payment.routinemanager.funcs.TaskTimeFunctions;
+import com.tom.payment.routinemanager.model.DailyRoutine;
+import com.tom.payment.routinemanager.model.DailyTask;
+import com.tom.payment.routinemanager.model.DefaultRoutine;
+import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
+import com.tom.payment.routinemanager.model.User;
+import com.tom.payment.routinemanager.repository.DailyRoutineRepository;
+import com.tom.payment.routinemanager.repository.DailyTaskRepository;
+import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
+import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
 
 @Service
 public class RoutineService {
@@ -117,8 +123,15 @@ public class RoutineService {
     public List<RoutineTaskTemplate> addDefaultTasks(UUID defaultRoutineId, List<RoutineTaskTemplate> tasks) {
         DefaultRoutine routine = defaultRoutineRepository.findById(defaultRoutineId)
                 .orElseThrow(() -> new RuntimeException("Default routine not found"));
-        tasks.forEach(task -> task.setDefaultRoutine(routine));
-        return routineTaskTemplateRepository.saveAll(tasks);
+
+        List<RoutineTaskTemplate> savedTasks = tasks.stream().map(task -> {
+            task.setDefaultRoutine(routine);
+            TaskTimeFunctions.shiftOverlappingTasks(routine.getTasks(), task);
+            routine.getTasks().add(task);
+            return task;
+        }).collect(Collectors.toList());
+
+        return routineTaskTemplateRepository.saveAll(savedTasks);
     }
 
     @Transactional
@@ -130,6 +143,15 @@ public class RoutineService {
             existing.setDescription(details.getDescription());
             existing.setStartTime(details.getStartTime());
             existing.setDurationMinutes(details.getDurationMinutes());
+
+            DefaultRoutine routine = existing.getDefaultRoutine();
+            if (routine != null) {
+                List<RoutineTaskTemplate> siblings = routine.getTasks().stream()
+                        .filter(task -> !task.getId().equals(existing.getId()))
+                        .collect(Collectors.toList());
+                TaskTimeFunctions.shiftOverlappingTasks(siblings, existing);
+            }
+
             return routineTaskTemplateRepository.save(existing);
         }).collect(Collectors.toList());
     }
@@ -149,8 +171,15 @@ public class RoutineService {
     public List<DailyTask> addDailyTasks(UUID dailyRoutineId, List<DailyTask> tasks) {
         DailyRoutine routine = dailyRoutineRepository.findById(dailyRoutineId)
                 .orElseThrow(() -> new RuntimeException("Daily routine not found"));
-        tasks.forEach(task -> task.setDailyRoutine(routine));
-        return dailyTaskRepository.saveAll(tasks);
+
+        List<DailyTask> savedTasks = tasks.stream().map(task -> {
+            task.setDailyRoutine(routine);
+            TaskTimeFunctions.shiftOverlappingTasks(routine.getTasks(), task);
+            routine.getTasks().add(task);
+            return task;
+        }).collect(Collectors.toList());
+
+        return dailyTaskRepository.saveAll(savedTasks);
     }
 
     @Transactional
@@ -163,6 +192,15 @@ public class RoutineService {
             existing.setStartTime(details.getStartTime());
             existing.setDurationMinutes(details.getDurationMinutes());
             existing.setCompleted(details.isCompleted());
+
+            DailyRoutine routine = existing.getDailyRoutine();
+            if (routine != null) {
+                List<DailyTask> siblings = routine.getTasks().stream()
+                        .filter(task -> !task.getId().equals(existing.getId()))
+                        .collect(Collectors.toList());
+                TaskTimeFunctions.shiftOverlappingTasks(siblings, existing);
+            }
+
             return dailyTaskRepository.save(existing);
         }).collect(Collectors.toList());
     }

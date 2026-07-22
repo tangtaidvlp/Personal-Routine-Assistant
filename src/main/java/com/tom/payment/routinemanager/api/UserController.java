@@ -1,12 +1,13 @@
 package com.tom.payment.routinemanager.api;
 
-import com.tom.payment.routinemanager.model.User;
-import com.tom.payment.routinemanager.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.tom.payment.routinemanager.model.User;
+import com.tom.payment.routinemanager.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
