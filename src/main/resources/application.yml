@@ -2,11 +2,8 @@ spring:
   application:
     name: routinemanager
 
-  datasource:
-    url: jdbc:postgresql://localhost:5469/postgres
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+  profiles:
+    active: fast
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -16,4 +13,7 @@ spring:
   ai:
     google:
       genai:
-        api-key: ${GEMINI_API_KEY:your_google_ai_studio_api_key_here}
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: gemini-3.6-flash

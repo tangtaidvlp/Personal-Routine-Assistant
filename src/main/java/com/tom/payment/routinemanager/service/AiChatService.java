@@ -1,9 +1,9 @@
 package com.tom.payment.routinemanager.service;
 
+import java.util.UUID;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 /**
  * Service that wires the Gemini ChatClient with our @Tool-annotated
@@ -28,9 +28,9 @@ public class AiChatService {
 
     public String chat(UUID userId, String userMessage) {
         return chatClient.prompt()
-                .system("The current user's ID is: " + userId
-                        + ". You MUST use this ID whenever a tool requires a 'userId' parameter. "
-                        + "Today's date is: " + java.time.LocalDate.now() + ".")
+                // .system("The current user's ID is: " + userId
+                //         + ". You MUST use this ID whenever a tool requires a 'userId' parameter. "
+                //         + "Today's date is: " + java.time.LocalDate.now() + ".")
                 .user(userMessage)
                 .call()
                 .content();
