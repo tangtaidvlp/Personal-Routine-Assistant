@@ -28,9 +28,9 @@ public class AiChatService {
 
     public String chat(UUID userId, String userMessage) {
         return chatClient.prompt()
-                // .system("The current user's ID is: " + userId
-                //         + ". You MUST use this ID whenever a tool requires a 'userId' parameter. "
-                //         + "Today's date is: " + java.time.ZonedDateTime.now() + ".")
+                .system("The current user's ID is: " + userId
+                        + ". You MUST use this ID whenever a tool requires a 'userId' parameter. "
+                        + "Today's date is: " + java.time.ZonedDateTime.now() + ".")
                 .user(userMessage)
                 .call()
                 .content();

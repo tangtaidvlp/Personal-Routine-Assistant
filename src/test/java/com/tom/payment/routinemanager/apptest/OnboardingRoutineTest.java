@@ -96,4 +96,48 @@ public class OnboardingRoutineTest {
         assertEquals("Morning Stretch", createdTasks.get(0).path("name").asText());
         assertEquals("Plan Day", createdTasks.get(1).path("name").asText());
     }
+
+    @Test
+    void addDefaultTasksAcceptsSingleTaskObjectPayload() throws Exception {
+        Map<String, Object> newUser = Map.of(
+                "username", "single-payload-user",
+                "email", "single-payload@example.com",
+                "passwordHash", "hashed-password"
+        );
+
+        MvcResult createUserResult = mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(newUser)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode createdUser = objectMapper.readTree(createUserResult.getResponse().getContentAsString());
+        String userId = createdUser.path("id").asText();
+        assertNotNull(userId);
+
+        MvcResult defaultRoutineResult = mockMvc.perform(get("/api/routine-manager/default-routine/{userId}", userId))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode defaultRoutine = objectMapper.readTree(defaultRoutineResult.getResponse().getContentAsString());
+        String routineId = defaultRoutine.path("id").asText();
+        assertNotNull(routineId);
+
+        RoutineTaskTemplate task = new RoutineTaskTemplate();
+        task.setName("Single Task");
+        task.setDescription("Accepts a single object payload");
+        task.setStartTime(LocalTime.of(9, 0));
+        task.setDurationMinutes(20);
+
+        MvcResult addTasksResult = mockMvc.perform(post("/api/routine-manager/default-routine/{routineId}/tasks", routineId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(task)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode createdTasks = objectMapper.readTree(addTasksResult.getResponse().getContentAsString());
+        assertNotNull(createdTasks);
+        assertEquals(1, createdTasks.size());
+        assertEquals("Single Task", createdTasks.get(0).path("name").asText());
+    }
 }

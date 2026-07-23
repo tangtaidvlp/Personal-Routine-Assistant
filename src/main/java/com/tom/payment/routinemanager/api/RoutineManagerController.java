@@ -3,6 +3,7 @@ package com.tom.payment.routinemanager.api;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tom.payment.routinemanager.dto.ChatRequest;
 import com.tom.payment.routinemanager.dto.ChatResponse;
 import com.tom.payment.routinemanager.model.DailyRoutine;
@@ -33,6 +37,9 @@ public class RoutineManagerController {
     private final DefaultRoutineService routineService;
     private final DailyRoutineService dailyRoutineService;
     private final AiChatService aiChatService;
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public RoutineManagerController(DefaultRoutineService routineService,
                                     DailyRoutineService dailyRoutineService,
@@ -56,7 +63,26 @@ public class RoutineManagerController {
     @PostMapping("/default-routine/{routineId}/tasks")
     public ResponseEntity<List<RoutineTaskTemplate>> addDefaultTasks(
             @PathVariable UUID routineId,
-            @RequestBody List<RoutineTaskTemplate> tasks) {
+            @RequestBody String body) {
+        JsonNode root;
+        try {
+            root = objectMapper.readTree(body);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Request body must be valid JSON", ex);
+        }
+
+        List<RoutineTaskTemplate> tasks;
+        if (root.isArray()) {
+            tasks = StreamSupport.stream(root.spliterator(), false)
+                    .map(node -> objectMapper.convertValue(node, RoutineTaskTemplate.class))
+                    .toList();
+        } else if (root.isObject()) {
+            RoutineTaskTemplate task = objectMapper.convertValue(root, RoutineTaskTemplate.class);
+            tasks = List.of(task);
+        } else {
+            throw new IllegalArgumentException("Request body must be a JSON object or array of objects");
+        }
+
         List<RoutineTaskTemplate> createdTasks = routineService.addDefaultTasks(routineId, tasks);
         return ResponseEntity.ok(createdTasks);
     }
