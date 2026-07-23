@@ -71,6 +71,13 @@ public class DefaultRoutineService {
         return defaultRoutineRepository.save(existing);
     }
 
+    @Transactional(readOnly = true)
+    public DefaultRoutine getDefaultRoutineByUserId(UUID userId) {
+        User user = userService.getUserById(userId);
+        return defaultRoutineRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
+    }
+
     @Transactional
     public List<RoutineTaskTemplate> addDefaultTasks(UUID defaultRoutineId, List<RoutineTaskTemplate> tasks) {
         DefaultRoutine routine = defaultRoutineRepository.findById(defaultRoutineId)

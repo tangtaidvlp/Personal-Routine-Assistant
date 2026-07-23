@@ -95,6 +95,12 @@ public class RoutineManagerController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/default-routine/{userId}")
+    public ResponseEntity<DefaultRoutine> getDefaultRoutineForUser(@PathVariable UUID userId) {
+        DefaultRoutine routine = routineService.getDefaultRoutineByUserId(userId);
+        return ResponseEntity.ok(routine);
+    }
+
     @PostMapping("/default-routine/{userId}")
     public ResponseEntity<DefaultRoutine> createDefaultRoutine(
             @PathVariable UUID userId,

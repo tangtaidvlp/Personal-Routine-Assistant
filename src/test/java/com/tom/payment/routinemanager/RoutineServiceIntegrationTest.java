@@ -26,6 +26,7 @@ import com.tom.payment.routinemanager.repository.DailyTaskRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
 import com.tom.payment.routinemanager.repository.RoutineTaskTemplateRepository;
 import com.tom.payment.routinemanager.repository.UserRepository;
+import com.tom.payment.routinemanager.service.DailyRoutineService;
 import com.tom.payment.routinemanager.service.DefaultRoutineService;
 import com.tom.payment.routinemanager.service.UserService;
 
@@ -35,6 +36,9 @@ public class RoutineServiceIntegrationTest {
 
     @Autowired
     private DefaultRoutineService routineService;
+
+    @Autowired
+    private DailyRoutineService dailyRoutineService;
 
     @Autowired
     private UserService userService;
@@ -74,7 +78,7 @@ public class RoutineServiceIntegrationTest {
 
         // 3. Trigger Daily Routine creation
         ZonedDateTime today = ZonedDateTime.now();
-        DailyRoutine dailyRoutine = routineService.getOrCreateDailyRoutine(user.getId(), today);
+        DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(user.getId(), today);
 
         // 4. Assertions
         assertNotNull(dailyRoutine);
@@ -192,7 +196,7 @@ public class RoutineServiceIntegrationTest {
         user = userService.createUser(user);
 
         ZonedDateTime today = ZonedDateTime.now();
-        DailyRoutine dailyRoutine = routineService.getOrCreateDailyRoutine(user.getId(), today);
+        DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(user.getId(), today);
 
         // 1. Add bulk daily tasks
         DailyTask task1 = new DailyTask();
@@ -207,7 +211,7 @@ public class RoutineServiceIntegrationTest {
         task2.setDurationMinutes(60);
         task2.setCompleted(true);
 
-        List<DailyTask> added = routineService.addDailyTasks(dailyRoutine.getId(), Arrays.asList(task1, task2));
+        List<DailyTask> added = dailyRoutineService.addDailyTasks(dailyRoutine.getId(), Arrays.asList(task1, task2));
         assertEquals(2, added.size());
 
         DailyRoutine fetchedRoutine = dailyRoutineRepository.findById(dailyRoutine.getId()).orElseThrow();
@@ -221,7 +225,7 @@ public class RoutineServiceIntegrationTest {
         dt2.setName("Daily Task B Updated");
         dt2.setCompleted(false);
 
-        List<DailyTask> updated = routineService.updateDailyTasks(Arrays.asList(dt1, dt2));
+        List<DailyTask> updated = dailyRoutineService.updateDailyTasks(Arrays.asList(dt1, dt2));
         assertEquals(2, updated.size());
 
         DailyRoutine fetchedRoutine2 = dailyRoutineRepository.findById(dailyRoutine.getId()).orElseThrow();
@@ -231,7 +235,7 @@ public class RoutineServiceIntegrationTest {
         assertFalse(updatedDt2.isCompleted());
 
         // 3. Delete bulk daily tasks
-        routineService.deleteDailyTasks(Arrays.asList(dt1.getId(), dt2.getId()));
+        dailyRoutineService.deleteDailyTasks(Arrays.asList(dt1.getId(), dt2.getId()));
         DailyRoutine fetchedRoutine3 = dailyRoutineRepository.findById(dailyRoutine.getId()).orElseThrow();
         assertEquals(0, fetchedRoutine3.getTasks().size());
     }

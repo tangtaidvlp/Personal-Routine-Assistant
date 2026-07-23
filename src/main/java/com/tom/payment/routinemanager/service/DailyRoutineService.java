@@ -112,7 +112,7 @@ public class DailyRoutineService {
     @Transactional
     public void spawnWeekdayRoutineForUser(User user) {
         // Fetch the default routine having type is "WEEKDAY" for the user
-        DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUserAndType(user, "WEEKDAY")
+        DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default weekday routine not found for user"));
         
         ZonedDateTime today = ZonedDateTime.now();
