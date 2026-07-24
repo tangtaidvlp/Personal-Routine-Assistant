@@ -18,7 +18,9 @@ import com.tom.payment.routinemanager.repository.DailyTaskRepository;
 import com.tom.payment.routinemanager.repository.DefaultRoutineRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DailyRoutineService {
@@ -34,12 +36,13 @@ public class DailyRoutineService {
     @Transactional
     public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalTime date) {
         User user = userService.getUserById(userId);
-
+        
         return dailyRoutineRepository.findByUserAndDate(user, date)
                 .orElseGet(() -> createDailyRoutineFromDefault(user, date));
     }
 
     private DailyRoutine createDailyRoutineFromDefault(User user, LocalTime date) {
+        log.info("Creating daily routine for user {} on date {}", user.getId(), date);
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
 

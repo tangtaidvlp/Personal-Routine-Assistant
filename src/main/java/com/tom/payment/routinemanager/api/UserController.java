@@ -21,7 +21,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
+        User createdUser = userService.createUserAndDefaultDailyRoutine(user);
         return ResponseEntity.ok(createdUser);
     }
 }

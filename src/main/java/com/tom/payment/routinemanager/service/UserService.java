@@ -24,11 +24,12 @@ public class UserService {
     }
 
     @Transactional
-    public User createUser(User user) {
+    public User createUserAndDefaultDailyRoutine(User user) {
         User savedUser = userRepository.save(user);
         
         DefaultRoutine defaultRoutine = new DefaultRoutine();
         defaultRoutine.setName("Default Routine");
+        defaultRoutine.setRoutineType(DefaultRoutine.RoutineTypeEnum.DAILY);
         routineService.createDefaultRoutine(savedUser.getId(), defaultRoutine);
         
         return savedUser;

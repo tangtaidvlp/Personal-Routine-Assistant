@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.service.cronjobs;
 
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,15 +23,20 @@ public class DailyTaskSpawningJob {
     public void spawnDailyRoutine() {
         List<User> users = userService.getAllUsers();
         for (User user : users) {
-            spawnDailyRoutineForUser(user);
+            try {
+                spawnDailyRoutineForUser(user);
+            } catch (Exception e) {
+                // Log the error and continue with the next user
+                System.err.println("Error spawning daily routine for user " + user.getId() + ": " + e.getMessage());
+            }
         }
     }
 
     private void spawnDailyRoutineForUser(User user) {
-        LocalTime now = LocalTime.now();
+        LocalDate now = LocalDate.now();
         // Check if weekday or weekend
-        boolean isWeekend = now.getDayOfWeek().getValue() >= 6; //
-        if (isWeekend) {
+        boolean hasWeekendRoutine = now.getDayOfWeek().getValue() >= 6;
+        if (hasWeekendRoutine) {
             if (user.getWeekendDefaultRoutine().isPresent()) {
                 dailyRoutineService.spawnWeekendRoutineForUser(user, user.getWeekendDefaultRoutine().get());
             } else {

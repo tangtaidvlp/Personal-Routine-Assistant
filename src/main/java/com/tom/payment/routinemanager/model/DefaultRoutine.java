@@ -22,6 +22,7 @@ public class DefaultRoutine {
 
     private String name;
 
+    @Enumerated(EnumType.STRING)
     private RoutineTypeEnum routineType;
 
     @JsonBackReference
@@ -31,10 +32,10 @@ public class DefaultRoutine {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "defaultRoutine", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RoutineTaskTemplate> tasks = new ArrayList<>();
+private List<RoutineTaskTemplate> tasks = new ArrayList<>();
 
-    static enum RoutineTypeEnum {
-        WEEKDAY,
+    public static enum RoutineTypeEnum {
+        DAILY,
         WEEKEND
     }
     
