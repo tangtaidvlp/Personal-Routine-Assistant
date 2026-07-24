@@ -28,6 +28,9 @@ public class DailyRoutineService {
     private final DailyRoutineRepository dailyRoutineRepository;
     private final DailyTaskRepository dailyTaskRepository;
 
+    // This one is for new user creation
+    // When they create account after the cron job has already run for the day
+    // we need to create a daily routine for them
     @Transactional
     public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalTime date) {
         User user = userService.getUserById(userId);
