@@ -11,7 +11,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -62,10 +61,10 @@ public class AiRoutineTools {
         }
     }
 
-    public record TaskUpdateInput(String taskName, String newName, String description, String startTime, Integer durationMinutes) {}
+        public record TaskUpdateInput(String taskId, String newName, String description, String startTime, Integer durationMinutes) {}
 
     @Tool(description = "Update one or more existing tasks in the user's default routine template. " +
-            "Identify each task by its current taskName. Only provided fields will be changed.")
+            "Identify each task by its taskId. Only provided fields will be changed.")
     public String updateDefaultTasks(
             @ToolParam(description = "The UUID of the user") String userId,
             @ToolParam(description = "List of task updates") List<TaskUpdateInput> updates) {
@@ -76,10 +75,11 @@ public class AiRoutineTools {
 
             List<RoutineTaskTemplate> toUpdate = new ArrayList<>();
             for (TaskUpdateInput u : updates) {
+                UUID taskId = UUID.fromString(u.taskId());
                 RoutineTaskTemplate existing = routine.getTasks().stream()
-                        .filter(t -> t.getName().equalsIgnoreCase(u.taskName()))
+                    .filter(t -> t.getId().equals(taskId))
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Task '" + u.taskName() + "' not found"));
+                    .orElseThrow(() -> new RuntimeException("Task id '" + u.taskId() + "' not found"));
 
                 RoutineTaskTemplate details = new RoutineTaskTemplate();
                 details.setId(existing.getId());
@@ -98,17 +98,21 @@ public class AiRoutineTools {
         }
     }
 
-    @Tool(description = "Delete one or more tasks from the user's default routine template by their names.")
+        @Tool(description = "Delete one or more tasks from the user's default routine template by their task IDs.")
     public String deleteDefaultTasks(
             @ToolParam(description = "The UUID of the user") String userId,
-            @ToolParam(description = "List of task names to delete") List<String> taskNames) {
+            @ToolParam(description = "List of task IDs to delete") List<String> taskIds) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
             DefaultRoutine routine = defaultRoutineRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
 
+            List<UUID> requestedIds = taskIds.stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+
             List<UUID> ids = routine.getTasks().stream()
-                    .filter(t -> taskNames.stream().anyMatch(n -> n.equalsIgnoreCase(t.getName())))
+                .filter(t -> requestedIds.contains(t.getId()))
                     .map(RoutineTaskTemplate::getId)
                     .collect(Collectors.toList());
 
@@ -154,10 +158,10 @@ public class AiRoutineTools {
         }
     }
 
-    public record DailyTaskUpdateInput(String taskName, String newName, String description, String startTime, Integer durationMinutes, Boolean completed) {}
+        public record DailyTaskUpdateInput(String taskId, String newName, String description, String startTime, Integer durationMinutes, Boolean completed) {}
 
     @Tool(description = "Update one or more tasks in the user's daily routine for a specific date. " +
-            "Identify each task by its current taskName. Can change name, time, duration, or completed status.")
+            "Identify each task by its taskId. Can change name, time, duration, or completed status.")
     public String updateDailyTasks(
             @ToolParam(description = "The UUID of the user") String userId,
             @ToolParam(description = "The date in yyyy-MM-dd format") String date,
@@ -170,10 +174,11 @@ public class AiRoutineTools {
 
             List<DailyTask> toUpdate = new ArrayList<>();
             for (DailyTaskUpdateInput u : updates) {
+                UUID taskId = UUID.fromString(u.taskId());
                 DailyTask existing = routine.getTasks().stream()
-                        .filter(t -> t.getName().equalsIgnoreCase(u.taskName()))
+                    .filter(t -> t.getId().equals(taskId))
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("Task '" + u.taskName() + "' not found"));
+                    .orElseThrow(() -> new RuntimeException("Task id '" + u.taskId() + "' not found"));
 
                 DailyTask details = new DailyTask();
                 details.setId(existing.getId());
@@ -194,19 +199,23 @@ public class AiRoutineTools {
         }
     }
 
-    @Tool(description = "Delete one or more tasks from the user's daily routine for a specific date by their names.")
+        @Tool(description = "Delete one or more tasks from the user's daily routine for a specific date by their task IDs.")
     public String deleteDailyTasks(
             @ToolParam(description = "The UUID of the user") String userId,
             @ToolParam(description = "The date in yyyy-MM-dd format") String date,
-            @ToolParam(description = "List of task names to delete") List<String> taskNames) {
+            @ToolParam(description = "List of task IDs to delete") List<String> taskIds) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
             LocalTime targetDate = LocalTime.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
+            List<UUID> requestedIds = taskIds.stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+
             List<UUID> ids = routine.getTasks().stream()
-                    .filter(t -> taskNames.stream().anyMatch(n -> n.equalsIgnoreCase(t.getName())))
+                .filter(t -> requestedIds.contains(t.getId()))
                     .map(DailyTask::getId)
                     .collect(Collectors.toList());
 
