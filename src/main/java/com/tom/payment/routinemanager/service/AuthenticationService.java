@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -101,7 +101,7 @@ public class AuthenticationService {
         }
 
         // Check if token is expired
-        if (refreshToken.getExpiryDate().isBefore(ZonedDateTime.now())) {
+        if (refreshToken.getExpiryDate().isBefore(LocalTime.now())) {
             throw new RuntimeException("Refresh token has expired");
         }
 
@@ -144,7 +144,7 @@ public class AuthenticationService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUserId(userId);
         refreshToken.setTokenVal(tokenValue);
-        refreshToken.setExpiryDate(ZonedDateTime.now().plusSeconds(refreshTokenExpiration));
+        refreshToken.setExpiryDate(LocalTime.now().plusSeconds(refreshTokenExpiration));
         refreshToken.setIsRevoked(false);
         refreshTokenRepository.save(refreshToken);
     }

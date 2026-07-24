@@ -10,7 +10,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,7 +133,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of daily tasks to add") List<DailyTaskInput> tasks) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            ZonedDateTime targetDate = ZonedDateTime.parse(date);
+            LocalTime targetDate = LocalTime.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
@@ -164,7 +164,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of daily task updates") List<DailyTaskUpdateInput> updates) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            ZonedDateTime targetDate = ZonedDateTime.parse(date);
+            LocalTime targetDate = LocalTime.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
@@ -201,7 +201,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of task names to delete") List<String> taskNames) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            ZonedDateTime targetDate = ZonedDateTime.parse(date);
+            LocalTime targetDate = LocalTime.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 

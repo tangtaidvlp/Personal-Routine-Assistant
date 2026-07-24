@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager;
 
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,7 +77,7 @@ public class RoutineServiceIntegrationTest {
         routineService.createDefaultRoutine(user.getId(), defaultRoutine);
 
         // 3. Trigger Daily Routine creation
-        ZonedDateTime today = ZonedDateTime.now();
+        LocalTime today = LocalTime.now();
         DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(user.getId(), today);
 
         // 4. Assertions
@@ -195,7 +195,7 @@ public class RoutineServiceIntegrationTest {
         User user = new User("bulkdailyuser", "bulkdaily@example.com");
         user = userService.createUser(user);
 
-        ZonedDateTime today = ZonedDateTime.now();
+        LocalTime today = LocalTime.now();
         DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(user.getId(), today);
 
         // 1. Add bulk daily tasks

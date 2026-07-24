@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.*;
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class DailyRoutine {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private ZonedDateTime date;
+    private LocalTime date;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

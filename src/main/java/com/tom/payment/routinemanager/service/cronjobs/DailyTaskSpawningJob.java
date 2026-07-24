@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.service.cronjobs;
 
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +28,7 @@ public class DailyTaskSpawningJob {
     }
 
     private void spawnDailyRoutineForUser(User user) {
-        ZonedDateTime now = ZonedDateTime.now();
+        LocalTime now = LocalTime.now();
         // Check if weekday or weekend
         boolean isWeekend = now.getDayOfWeek().getValue() >= 6; //
         if (isWeekend) {

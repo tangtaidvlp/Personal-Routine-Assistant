@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -25,7 +25,7 @@ public class RefreshToken {
     private String tokenVal;
 
     @Column(name = "expiry_date", nullable = false)
-    private ZonedDateTime expiryDate;
+    private LocalTime expiryDate;
 
     @Column(name = "is_revoked", nullable = false)
     private Boolean isRevoked = false;

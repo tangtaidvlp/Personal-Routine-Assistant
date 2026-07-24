@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.service;
 
-import java.time.ZonedDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,14 +29,14 @@ public class DailyRoutineService {
     private final DailyTaskRepository dailyTaskRepository;
 
     @Transactional
-    public DailyRoutine getOrCreateDailyRoutine(UUID userId, ZonedDateTime date) {
+    public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalTime date) {
         User user = userService.getUserById(userId);
 
         return dailyRoutineRepository.findByUserAndDate(user, date)
                 .orElseGet(() -> createDailyRoutineFromDefault(user, date));
     }
 
-    private DailyRoutine createDailyRoutineFromDefault(User user, ZonedDateTime date) {
+    private DailyRoutine createDailyRoutineFromDefault(User user, LocalTime date) {
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
 
@@ -115,7 +115,7 @@ public class DailyRoutineService {
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default weekday routine not found for user"));
         
-        ZonedDateTime today = ZonedDateTime.now();
+        LocalTime today = LocalTime.now();
         DailyRoutine dailyRoutine = new DailyRoutine();
         dailyRoutine.setUser(user);
         dailyRoutine.setDate(today);
@@ -139,7 +139,7 @@ public class DailyRoutineService {
 
     @Transactional
     public void spawnWeekendRoutineForUser(User user, DefaultRoutine weekendRoutine) {
-        ZonedDateTime today = ZonedDateTime.now();
+        LocalTime today = LocalTime.now();
         DailyRoutine dailyRoutine = new DailyRoutine();
         dailyRoutine.setUser(user);
         dailyRoutine.setDate(today);
