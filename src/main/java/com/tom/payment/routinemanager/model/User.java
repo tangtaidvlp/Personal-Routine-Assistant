@@ -27,6 +27,7 @@ public class User {
     private String username;
     private String email;
 
+    @JsonIgnore
     @Column(name = "password_hash")
     private String passwordHash;
 

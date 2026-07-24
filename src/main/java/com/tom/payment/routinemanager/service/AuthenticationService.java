@@ -5,18 +5,19 @@ import com.tom.payment.routinemanager.model.RefreshToken;
 import com.tom.payment.routinemanager.model.User;
 import com.tom.payment.routinemanager.repository.RefreshTokenRepository;
 import com.tom.payment.routinemanager.repository.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Key;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.UUID;
+
+import javax.crypto.SecretKey;
 
 @Service
 public class AuthenticationService {
@@ -24,7 +25,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final Key jwtSecretKey;
+    private final SecretKey jwtSecretKey;
 
     @Value("${jwt.access.expiration:900}") // 15 minutes in seconds
     private int accessTokenExpiration;
@@ -39,7 +40,7 @@ public class AuthenticationService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
         // Generate a secure key for HS256
-        this.jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        this.jwtSecretKey = Jwts.SIG.HS256.key().build();
     }
 
     @Transactional
@@ -52,13 +53,14 @@ public class AuthenticationService {
         // Create new user
         User user = new User();
         user.setEmail(request.getEmail());
+        user.setUsername(request.getUsername());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        
         User savedUser = userRepository.save(user);
 
         return new RegisterResponse(
                 savedUser.getId(),
                 savedUser.getEmail(),
+                savedUser.getUsername(),
                 "User registered successfully."
         );
     }
@@ -121,22 +123,49 @@ public class AuthenticationService {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    public String extractUsername(String token) {
+        Claims claims = parseClaims(token);
+        String email = claims.get("email", String.class);
+        if (email != null && !email.isBlank()) {
+            return email;
+        }
+        return claims.getSubject();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            Date expiration = claims.getExpiration();
+            return expiration != null && expiration.after(new Date());
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(jwtSecretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     private String generateAccessToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getId().toString())
+                .subject(user.getId().toString())
                 .claim("email", user.getEmail())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration * 1000L))
-                .signWith(jwtSecretKey, SignatureAlgorithm.HS256)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration * 1000L))
+                .signWith(jwtSecretKey)
                 .compact();
     }
 
     private String generateRefreshToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getId().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration * 1000L))
-                .signWith(jwtSecretKey, SignatureAlgorithm.HS256)
+                .subject(user.getId().toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration * 1000L))
+                .signWith(jwtSecretKey)
                 .compact();
     }
 

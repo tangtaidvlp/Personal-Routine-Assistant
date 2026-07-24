@@ -10,18 +10,23 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.tom.payment.routinemanager.service.AuthenticationService;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Component
 @Profile("prod && sit")
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    // Inject your own JwtService utility class here to handle parsing/validation
-    // private final JwtService jwtService;
-    // private final UserDetailsService userDetailsService;
+    private final AuthenticationService authenticationService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,15 +46,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 2. Extract the token
         jwt = authHeader.substring(7);
 
-        // 3. Placeholder: Extract username/email from your JWT utility service
-        // userEmail = jwtService.extractUsername(jwt);
-        userEmail = "stubbed_username"; // Temporary placeholder
-
+        // 3. Extract username/email from JWT
+        userEmail = authenticationService.extractUsername(jwt);
+        log.debug("User working email   : {}", userEmail);
         // 4. If we have a username and the user isn't authenticated yet
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // Validate token using your service logic (e.g., jwtService.isTokenValid(jwt, userDetails))
-            boolean isTokenValid = true; // Temporary placeholder
+            // Validate token using authentication service
+            boolean isTokenValid = authenticationService.isTokenValid(jwt);
 
             if (isTokenValid) {
                 // Create an authentication object. Pass roles/authorities in place of Collections.emptyList()
