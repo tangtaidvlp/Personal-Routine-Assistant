@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.service;
 
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -34,14 +34,14 @@ public class DailyRoutineService {
     // When they create account after the cron job has already run for the day
     // we need to create a daily routine for them
     @Transactional
-    public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalTime date) {
+    public DailyRoutine getOrCreateDailyRoutine(UUID userId, LocalDate date) {
         User user = userService.getUserById(userId);
         
         return dailyRoutineRepository.findByUserAndDate(user, date)
                 .orElseGet(() -> createDailyRoutineFromDefault(user, date));
     }
 
-    private DailyRoutine createDailyRoutineFromDefault(User user, LocalTime date) {
+    private DailyRoutine createDailyRoutineFromDefault(User user, LocalDate date) {
         log.info("Creating daily routine for user {} on date {}", user.getId(), date);
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default routine not found for user"));
@@ -116,12 +116,17 @@ public class DailyRoutineService {
     }
 
     @Transactional
-    public void spawnWeekdayRoutineForUser(User user) {
+    public void spawnDailyRoutineForUser(User user) {
+        LocalDate today = LocalDate.now();
+        if (dailyRoutineRepository.findByUserAndDate(user, today).isPresent()) {
+            log.info("Skip spawn for user {}: daily routine already exists for {}", user.getId(), today);
+            return;
+        }
+
         // Fetch the default routine having type is "WEEKDAY" for the user
         DefaultRoutine defaultRoutine = defaultRoutineRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Default weekday routine not found for user"));
-        
-        LocalTime today = LocalTime.now();
+
         DailyRoutine dailyRoutine = new DailyRoutine();
         dailyRoutine.setUser(user);
         dailyRoutine.setDate(today);
@@ -145,7 +150,12 @@ public class DailyRoutineService {
 
     @Transactional
     public void spawnWeekendRoutineForUser(User user, DefaultRoutine weekendRoutine) {
-        LocalTime today = LocalTime.now();
+        LocalDate today = LocalDate.now();
+        if (dailyRoutineRepository.findByUserAndDate(user, today).isPresent()) {
+            log.info("Skip weekend spawn for user {}: daily routine already exists for {}", user.getId(), today);
+            return;
+        }
+
         DailyRoutine dailyRoutine = new DailyRoutine();
         dailyRoutine.setUser(user);
         dailyRoutine.setDate(today);

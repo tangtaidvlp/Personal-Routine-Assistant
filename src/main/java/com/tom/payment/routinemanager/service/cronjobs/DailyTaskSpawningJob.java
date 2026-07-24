@@ -40,10 +40,10 @@ public class DailyTaskSpawningJob {
             if (user.getWeekendDefaultRoutine().isPresent()) {
                 dailyRoutineService.spawnWeekendRoutineForUser(user, user.getWeekendDefaultRoutine().get());
             } else {
-                dailyRoutineService.spawnWeekdayRoutineForUser(user);
+                dailyRoutineService.spawnDailyRoutineForUser(user);
             }
         } else {
-            dailyRoutineService.spawnWeekdayRoutineForUser(user);
+            dailyRoutineService.spawnDailyRoutineForUser(user);
         }
     }
 

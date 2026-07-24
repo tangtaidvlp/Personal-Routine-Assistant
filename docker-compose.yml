@@ -1,0 +1,37 @@
+services:
+  database:
+    image: postgres:trixie
+    container_name: routine-manager-dbdo
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5469:5432"
+    volumes:
+      - postgres_data_v18:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: routine-manager-app
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: local
+  #     SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/postgres
+  #     SPRING_DATASOURCE_USERNAME: postgres
+  #     SPRING_DATASOURCE_PASSWORD: postgres
+  #     GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  #   ports:
+  #     - "8080:8080"
+
+volumes:
+  postgres_data_v18:

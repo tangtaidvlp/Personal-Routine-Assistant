@@ -10,6 +10,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +114,7 @@ public class AiRoutineTools {
 
             List<UUID> ids = routine.getTasks().stream()
                 .filter(t -> requestedIds.contains(t.getId()))
-                    .map(RoutineTaskTemplate::getId)
+                    .map(t -> t.getId())
                     .collect(Collectors.toList());
 
             if (ids.isEmpty()) return "No matching tasks found to delete.";
@@ -137,7 +138,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of daily tasks to add") List<DailyTaskInput> tasks) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            LocalTime targetDate = LocalTime.parse(date);
+            LocalDate targetDate = LocalDate.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
@@ -168,7 +169,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of daily task updates") List<DailyTaskUpdateInput> updates) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            LocalTime targetDate = LocalTime.parse(date);
+            LocalDate targetDate = LocalDate.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
@@ -206,7 +207,7 @@ public class AiRoutineTools {
             @ToolParam(description = "List of task IDs to delete") List<String> taskIds) {
         try {
             User user = userService.getUserById(UUID.fromString(userId));
-            LocalTime targetDate = LocalTime.parse(date);
+            LocalDate targetDate = LocalDate.parse(date);
             DailyRoutine routine = dailyRoutineRepository.findByUserAndDate(user, targetDate)
                     .orElseThrow(() -> new RuntimeException("Daily routine not found for date: " + date));
 
@@ -216,7 +217,7 @@ public class AiRoutineTools {
 
             List<UUID> ids = routine.getTasks().stream()
                 .filter(t -> requestedIds.contains(t.getId()))
-                    .map(DailyTask::getId)
+                    .map(t -> t.getId())
                     .collect(Collectors.toList());
 
             if (ids.isEmpty()) return "No matching tasks found to delete.";

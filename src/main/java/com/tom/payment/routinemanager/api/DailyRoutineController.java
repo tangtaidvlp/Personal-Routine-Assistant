@@ -1,6 +1,6 @@
 package com.tom.payment.routinemanager.api;
 
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,9 +54,9 @@ public class DailyRoutineController {
     @GetMapping("/daily-routine/{userId}")
     public ResponseEntity<DailyRoutine> getDailyRoutineOrCreateIfNewAccount(
             @PathVariable UUID userId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalTime date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        LocalTime targetDate = (date != null) ? date : LocalTime.now();
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
         DailyRoutine dailyRoutine = dailyRoutineService.getOrCreateDailyRoutine(userId, targetDate);
         return ResponseEntity.ok(dailyRoutine);
     }

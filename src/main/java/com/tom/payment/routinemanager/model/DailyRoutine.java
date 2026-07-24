@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.*;
-import java.time.LocalTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +21,7 @@ public class DailyRoutine {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private LocalTime date;
+    private LocalDate date;
 
     @JsonIgnore
     @ManyToOne
