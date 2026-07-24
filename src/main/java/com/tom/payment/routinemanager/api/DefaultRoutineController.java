@@ -14,11 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tom.payment.routinemanager.dto.ChatRequest;
-import com.tom.payment.routinemanager.dto.ChatResponse;
 import com.tom.payment.routinemanager.model.DefaultRoutine;
 import com.tom.payment.routinemanager.model.RoutineTaskTemplate;
-import com.tom.payment.routinemanager.service.AiChatService;
 import com.tom.payment.routinemanager.service.DefaultRoutineService;
 
 @RestController
@@ -26,21 +23,9 @@ import com.tom.payment.routinemanager.service.DefaultRoutineService;
 public class DefaultRoutineController {
 
     private final DefaultRoutineService routineService;
-    private final AiChatService aiChatService;
 
-    public DefaultRoutineController(DefaultRoutineService routineService, AiChatService aiChatService) {
+    public DefaultRoutineController(DefaultRoutineService routineService) {
         this.routineService = routineService;
-        this.aiChatService = aiChatService;
-    }
-
-    @PostMapping("/chat/{userId}")
-    public ResponseEntity<ChatResponse> chatWithAi(
-            @PathVariable UUID userId,
-            @RequestBody ChatRequest request) {
-        String aiReply = aiChatService.chat(userId, request.getMessage());
-        ChatResponse response = new ChatResponse();
-        response.setReply(aiReply);
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/default-routine/{routineId}/tasks")
